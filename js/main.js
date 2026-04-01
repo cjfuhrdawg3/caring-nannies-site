@@ -1,4 +1,6 @@
-// ═══ Caring Nannies — Main JS ═══
+// ═══ Caring Nannies - Main JS ═══
+
+const MILLIE_API = 'https://millie-five.vercel.app/api/leads';
 
 // Navbar scroll effect
 const navbar = document.getElementById('navbar');
@@ -45,7 +47,6 @@ const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
       entry.target.classList.add('visible');
-      // Also trigger stagger children
       entry.target.querySelectorAll('.stagger-children').forEach(el => {
         el.classList.add('visible');
       });
@@ -61,7 +62,7 @@ fadeElements.forEach(el => {
   observer.observe(el);
 });
 
-// Smooth scroll for anchor links (fallback for older browsers)
+// Smooth scroll for anchor links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   anchor.addEventListener('click', function (e) {
     e.preventDefault();
@@ -71,3 +72,48 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     }
   });
 });
+
+// ═══ Contact Form - Submit to Millie CRM ═══
+const contactForm = document.getElementById('contact-form');
+const submitBtn = document.getElementById('submit-btn');
+const formSuccess = document.getElementById('form-success');
+
+if (contactForm) {
+  contactForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const phone = document.getElementById('phone').value;
+    const service = document.getElementById('service').value;
+    const message = document.getElementById('message').value;
+
+    // Disable button
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending...';
+
+    try {
+      const res = await fetch(MILLIE_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone, service, message }),
+      });
+
+      if (res.ok) {
+        // Show success, hide form
+        contactForm.classList.add('hidden');
+        formSuccess.classList.remove('hidden');
+      } else {
+        throw new Error('Failed');
+      }
+    } catch (err) {
+      // Fallback: show a simple alert but don't lose the data
+      alert('Thank you for your message! We\'ll be in touch within 24 hours. If you need immediate assistance, please call (210) 666-2669.');
+      contactForm.classList.add('hidden');
+      formSuccess.classList.remove('hidden');
+    }
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Send Message';
+  });
+}

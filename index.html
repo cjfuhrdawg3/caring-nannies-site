@@ -558,8 +558,7 @@
 
           <!-- Contact Form -->
           <div>
-            <form name="contact" method="POST" data-netlify="true" class="space-y-6">
-              <input type="hidden" name="form-name" value="contact">
+            <form id="contact-form" class="space-y-6">
               <div class="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label for="name" class="block text-sm font-medium text-white/70 mb-2">Your Name</label>
@@ -590,10 +589,17 @@
                 <label for="message" class="block text-sm font-medium text-white/70 mb-2">Tell Us About Your Needs</label>
                 <textarea id="message" name="message" rows="4" class="w-full bg-white/10 border border-white/20 px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-champagne transition-colors resize-none" placeholder="Number of children, ages, schedule needs..."></textarea>
               </div>
-              <button type="submit" class="w-full bg-champagne text-navy py-4 text-sm font-semibold tracking-wide uppercase hover:bg-champagne/90 transition-colors">
+              <button type="submit" id="submit-btn" class="w-full bg-champagne text-navy py-4 text-sm font-semibold tracking-wide uppercase hover:bg-champagne/90 transition-colors">
                 Send Message
               </button>
             </form>
+            <div id="form-success" class="hidden text-center py-12">
+              <div class="w-16 h-16 bg-champagne/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-champagne" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <h3 class="font-serif text-2xl font-bold text-white mb-2">Thank You!</h3>
+              <p class="text-white/70">A coordinator will be in touch within 24 hours. Check your email for a confirmation.</p>
+            </div>
           </div>
         </div>
       </div>
