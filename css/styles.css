@@ -20,14 +20,15 @@ html {
 .nav-link {
   color: rgba(255, 255, 255, 0.9);
 }
-.nav-logo-text {
-  color: #ffffff;
+.nav-logo {
+  filter: brightness(0) invert(1);
+  transition: filter 0.3s ease;
 }
 #navbar.scrolled .nav-link {
   color: #2D2D2D;
 }
-#navbar.scrolled .nav-logo-text {
-  color: #1B2A4A;
+#navbar.scrolled .nav-logo {
+  filter: none;
 }
 
 /* Mobile menu icon */
