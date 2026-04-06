@@ -1,6 +1,6 @@
 // ═══ Caring Nannies - Main JS ═══
 
-const MILLIE_API = 'https://millie-five.vercel.app/api/leads';
+const MILLIE_API = 'https://app.caringnannies.com/api/leads';
 
 // Navbar scroll effect
 const navbar = document.getElementById('navbar');
