@@ -1,0 +1,23 @@
+{
+  "name": "caring-nannies-site",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cjfuhrdawg3/caring-nannies-site.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cjfuhrdawg3/caring-nannies-site/issues"
+  },
+  "homepage": "https://github.com/cjfuhrdawg3/caring-nannies-site#readme",
+  "devDependencies": {
+    "tailwindcss": "^3.4.19"
+  }
+}
