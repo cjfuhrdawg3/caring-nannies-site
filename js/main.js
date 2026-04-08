@@ -82,15 +82,16 @@ if (contactForm) {
   contactForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    // Guard against double-submit
+    if (submitBtn.disabled) return;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending...';
+
     const name = document.getElementById('name').value;
     const email = document.getElementById('email').value;
     const phone = document.getElementById('phone').value;
     const service = document.getElementById('service').value;
     const message = document.getElementById('message').value;
-
-    // Disable button
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Sending...';
 
     try {
       const res = await fetch(MILLIE_API, {
@@ -100,20 +101,16 @@ if (contactForm) {
       });
 
       if (res.ok) {
-        // Show success, hide form
         contactForm.classList.add('hidden');
         formSuccess.classList.remove('hidden');
       } else {
         throw new Error('Failed');
       }
     } catch (err) {
-      // Fallback: show a simple alert but don't lose the data
       alert('Thank you for your message! We\'ll be in touch within 24 hours. If you need immediate assistance, please call (210) 666-2669.');
       contactForm.classList.add('hidden');
       formSuccess.classList.remove('hidden');
     }
-
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Send Message';
+    // Don't re-enable — form is hidden on both success and error
   });
 }
