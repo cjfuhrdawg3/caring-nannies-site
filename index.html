@@ -644,6 +644,13 @@
           <!-- Contact Form -->
           <div>
             <form id="contact-form" class="space-y-6">
+              <!-- Honeypot field — hidden from humans, bots auto-fill it -->
+              <div style="position:absolute; left:-9999px; top:-9999px; width:1px; height:1px; overflow:hidden;" aria-hidden="true">
+                <label for="website">Website (leave blank)</label>
+                <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+              </div>
+              <!-- Page load timestamp for time-based bot detection -->
+              <input type="hidden" id="loaded-at" name="loadedAt" value="">
               <div class="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label for="name" class="block text-sm font-medium text-white/70 mb-2">Your Name</label>
