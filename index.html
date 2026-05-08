@@ -846,19 +846,8 @@
           </div>
           <div class="grid sm:grid-cols-2 gap-4">
             <div>
-              <label for="neighborhood" class="block text-[10px] tracking-micro uppercase text-paper/65 mb-2">Neighborhood</label>
-              <select id="neighborhood" name="neighborhood" class="w-full bg-paper/5 border border-paper/20 px-4 py-3.5 text-paper focus:outline-none focus:border-champagne transition-colors text-[15px]">
-                <option value="" class="text-charcoal">Select…</option>
-                <option class="text-charcoal">Alamo Heights</option>
-                <option class="text-charcoal">Olmos Park</option>
-                <option class="text-charcoal">Terrell Hills</option>
-                <option class="text-charcoal">Monte Vista</option>
-                <option class="text-charcoal">Stone Oak</option>
-                <option class="text-charcoal">The Dominion</option>
-                <option class="text-charcoal">King William</option>
-                <option class="text-charcoal">Hill Country Village</option>
-                <option class="text-charcoal">Other / outside SA</option>
-              </select>
+              <label for="zipCode" class="block text-[10px] tracking-micro uppercase text-paper/65 mb-2">ZIP Code</label>
+              <input type="text" id="zipCode" name="zipCode" inputmode="numeric" autocomplete="postal-code" maxlength="10" class="w-full bg-paper/5 border border-paper/20 px-4 py-3.5 text-paper placeholder-paper/35 focus:outline-none focus:border-champagne transition-colors text-[15px]" placeholder="78209">
             </div>
             <div>
               <label for="service" class="block text-[10px] tracking-micro uppercase text-paper/65 mb-2">What you're looking for</label>

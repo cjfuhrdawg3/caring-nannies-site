@@ -90,17 +90,11 @@ if (contactForm) {
     const email = document.getElementById('email').value;
     const phone = document.getElementById('phone').value;
     const service = document.getElementById('service').value;
-    const neighborhood = document.getElementById('neighborhood')?.value || '';
+    const zipCode = document.getElementById('zipCode')?.value?.trim() || '';
     const messageInput = document.getElementById('message').value;
     const smsConsent = document.getElementById('sms-consent')?.checked || false;
     const website = document.getElementById('website')?.value || ''; // honeypot
     const loadedAt = parseInt(loadedAtEl?.value || '0', 10);
-
-    // Prepend neighborhood to the message body so the API doesn't need a new field.
-    // Keeps the structured info searchable in the coordinator-facing internalNotes.
-    const message = neighborhood
-      ? `Neighborhood: ${neighborhood}\n\n${messageInput}`.trim()
-      : messageInput;
 
     try {
       const res = await fetch(MILLIE_API, {
@@ -111,7 +105,8 @@ if (contactForm) {
           email,
           phone,
           service,
-          message,
+          zipCode,
+          message: messageInput,
           smsConsent,
           website,
           loadedAt,
