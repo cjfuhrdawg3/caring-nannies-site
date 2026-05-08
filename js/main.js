@@ -96,6 +96,7 @@ if (contactForm) {
     const phone = document.getElementById('phone').value;
     const service = document.getElementById('service').value;
     const message = document.getElementById('message').value;
+    const smsConsent = document.getElementById('sms-consent')?.checked || false;
     const website = document.getElementById('website')?.value || ''; // honeypot
     const loadedAt = parseInt(loadedAtEl?.value || '0', 10);
 
@@ -103,7 +104,7 @@ if (contactForm) {
       const res = await fetch(MILLIE_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, service, message, website, loadedAt }),
+        body: JSON.stringify({ name, email, phone, service, message, smsConsent, website, loadedAt }),
       });
 
       if (res.ok) {
