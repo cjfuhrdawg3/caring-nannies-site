@@ -1,2 +1,5 @@
 # Netlify redirects
 # Add custom redirects here if needed
+
+# Vanity subdomain for ads/print — requires 'atx.caringnannies.com' added as a domain alias in Netlify
+https://atx.caringnannies.com/* https://caringnannies.com/austin/:splat 301!

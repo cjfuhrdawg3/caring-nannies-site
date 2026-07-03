@@ -2,6 +2,16 @@
 
 const MILLIE_API = 'https://app.caringnannies.com/api/leads';
 
+// ─── Capture ad attribution (UTMs) from the landing URL ──────────────────
+const UTM_PARAMS = (() => {
+  const p = new URLSearchParams(window.location.search);
+  const keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+  const found = keys.filter((k) => p.get(k)).map((k) => `${k}=${p.get(k)}`);
+  if (found.length) sessionStorage.setItem('cn_utms', found.join(' | '));
+  return sessionStorage.getItem('cn_utms') || '';
+})();
+
+
 // ─── Navbar scroll effect ────────────────────────────────────────────────
 const navbar = document.getElementById('navbar');
 
@@ -94,6 +104,13 @@ if (contactForm) {
     const messageInput = document.getElementById('message').value;
     const smsConsent = document.getElementById('sms-consent')?.checked || false;
     const website = document.getElementById('website')?.value || ''; // honeypot
+
+    // Conversion tracking — safe no-ops if scripts are blocked
+    function trackLead() {
+      try { if (typeof fbq === 'function') fbq('track', 'Lead'); } catch (e) {}
+      try { if (typeof plausible === 'function') plausible('Lead'); } catch (e) {}
+    }
+
     const loadedAt = parseInt(loadedAtEl?.value || '0', 10);
 
     try {
@@ -106,7 +123,7 @@ if (contactForm) {
           phone,
           service,
           zipCode,
-          message: messageInput,
+          message: UTM_PARAMS ? `${messageInput}\n\n[ad attribution: ${UTM_PARAMS}]` : messageInput,
           smsConsent,
           website,
           loadedAt,
@@ -114,6 +131,7 @@ if (contactForm) {
       });
 
       if (res.ok) {
+        trackLead();
         contactForm.classList.add('hidden');
         formSuccess.classList.remove('hidden');
         formSuccess.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -123,6 +141,7 @@ if (contactForm) {
     } catch (err) {
       // Even on network error, show success — coordinator gets backup via Plausible
       // event log + phone number in success copy.
+      trackLead();
       contactForm.classList.add('hidden');
       formSuccess.classList.remove('hidden');
       formSuccess.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
