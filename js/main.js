@@ -105,7 +105,7 @@ if (contactForm) {
     const smsConsent = document.getElementById('sms-consent')?.checked || false;
     const website = document.getElementById('website')?.value || ''; // honeypot
 
-    // Conversion tracking — safe no-ops if scripts are blocked
+    // Conversion tracking, safe no-ops if scripts are blocked
     function trackLead() {
       try { if (typeof fbq === 'function') fbq('track', 'Lead'); } catch (e) {}
       try { if (typeof plausible === 'function') plausible('Lead'); } catch (e) {}
@@ -139,14 +139,14 @@ if (contactForm) {
         throw new Error('Failed');
       }
     } catch (err) {
-      // Even on network error, show success — coordinator gets backup via Plausible
+      // Even on network error, show success, coordinator gets backup via Plausible
       // event log + phone number in success copy.
       trackLead();
       contactForm.classList.add('hidden');
       formSuccess.classList.remove('hidden');
       formSuccess.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
-    // Don't re-enable — form is hidden on both success and error
+    // Don't re-enable, form is hidden on both success and error
     submitBtn.innerHTML = originalLabel;
   });
 }
