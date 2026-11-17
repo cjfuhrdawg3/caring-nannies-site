@@ -2,15 +2,37 @@
 
 const MILLIE_API = 'https://app.caringnannies.com/api/leads';
 
-// ─── Capture ad attribution (UTMs) from the landing URL ──────────────────
-const UTM_PARAMS = (() => {
+// ─── Lead attribution: UTMs, landing page, referrer, market ──────────────
+// Captured once per visit (sessionStorage) so a family who lands on an ad
+// link and browses before submitting keeps the original source.
+function sessionGet(key) {
+  try { return sessionStorage.getItem(key) || ''; } catch (e) { return ''; }
+}
+function sessionSetOnce(key, value) {
+  try { if (value && !sessionStorage.getItem(key)) sessionStorage.setItem(key, value); } catch (e) {}
+}
+
+const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+const UTM = (() => {
   const p = new URLSearchParams(window.location.search);
-  const keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
-  const found = keys.filter((k) => p.get(k)).map((k) => `${k}=${p.get(k)}`);
-  if (found.length) sessionStorage.setItem('cn_utms', found.join(' | '));
-  return sessionStorage.getItem('cn_utms') || '';
+  const found = {};
+  UTM_KEYS.forEach((k) => { if (p.get(k)) found[k] = p.get(k).slice(0, 200); });
+  // A new tagged link replaces the stored one; otherwise keep what we had.
+  if (Object.keys(found).length) {
+    try { sessionStorage.setItem('cn_utm', JSON.stringify(found)); } catch (e) {}
+    return found;
+  }
+  try { return JSON.parse(sessionGet('cn_utm') || '{}'); } catch (e) { return {}; }
 })();
 
+sessionSetOnce('cn_landing', window.location.pathname);
+// Only an outside referrer counts; moving between our own pages does not.
+if (document.referrer && !document.referrer.includes(window.location.hostname)) {
+  sessionSetOnce('cn_referrer', document.referrer.slice(0, 300));
+}
+
+// The page decides the market. Millie falls back to ZIP when it needs to.
+const MARKET = window.location.pathname.startsWith('/austin') ? 'ATX' : 'SATX';
 
 // ─── Navbar scroll effect ────────────────────────────────────────────────
 const navbar = document.getElementById('navbar');
@@ -81,11 +103,61 @@ document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
 const contactForm = document.getElementById('contact-form');
 const submitBtn = document.getElementById('submit-btn');
 const formSuccess = document.getElementById('form-success');
+const formError = document.getElementById('form-error');
+const formRetry = document.getElementById('form-retry');
+
+// One attempt. Resolves true when Millie accepted the lead, false when it is
+// worth trying again (network failure, timeout, 429 or a server error), and
+// throws on a 4xx the visitor has to fix.
+async function postLead(payload) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const res = await fetch(MILLIE_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    if (res.ok) return true;
+    if (res.status === 429 || res.status >= 500) return false;
+    const data = await res.json().catch(() => ({}));
+    const err = new Error(data.error || 'Please check the form and try again.');
+    err.userFacing = true;
+    throw err;
+  } catch (err) {
+    if (err.userFacing) throw err;
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 if (contactForm) {
   // Record page load time for bot detection (bots submit forms in < 3 seconds)
   const loadedAtEl = document.getElementById('loaded-at');
   if (loadedAtEl) loadedAtEl.value = Date.now().toString();
+
+  const originalLabel = submitBtn.innerHTML;
+  const fieldError = document.createElement('p');
+  fieldError.className = 'hidden text-sm text-champagne text-center';
+  fieldError.setAttribute('role', 'alert');
+  submitBtn.insertAdjacentElement('afterend', fieldError);
+
+  function show(el) {
+    contactForm.classList.add('hidden');
+    el.classList.remove('hidden');
+    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  if (formRetry) {
+    formRetry.addEventListener('click', () => {
+      formError.classList.add('hidden');
+      contactForm.classList.remove('hidden');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalLabel;
+    });
+  }
 
   contactForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -93,60 +165,67 @@ if (contactForm) {
     // Guard against double-submit
     if (submitBtn.disabled) return;
     submitBtn.disabled = true;
-    const originalLabel = submitBtn.innerHTML;
     submitBtn.textContent = 'Sending...';
+    fieldError.classList.add('hidden');
 
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('email').value;
-    const phone = document.getElementById('phone').value;
-    const service = document.getElementById('service').value;
-    const zipCode = document.getElementById('zipCode')?.value?.trim() || '';
     const messageInput = document.getElementById('message').value;
-    const smsConsent = document.getElementById('sms-consent')?.checked || false;
-    const website = document.getElementById('website')?.value || ''; // honeypot
+    const heardAbout = document.getElementById('heardAbout')?.value || '';
+    const landingPage = sessionGet('cn_landing') || window.location.pathname;
+    const referrer = sessionGet('cn_referrer');
 
-    // Conversion tracking, safe no-ops if scripts are blocked
-    function trackLead() {
-      try { if (typeof fbq === 'function') fbq('track', 'Lead'); } catch (e) {}
-      try { if (typeof plausible === 'function') plausible('Lead'); } catch (e) {}
-    }
+    // Millie stores the structured fields below once it supports them. Until
+    // then the same facts ride along in the message so coordinators see them.
+    const sourceBits = [
+      heardAbout && `heard about us: ${heardAbout}`,
+      `market: ${MARKET}`,
+      `page: ${window.location.pathname}`,
+      landingPage !== window.location.pathname && `landed on: ${landingPage}`,
+      referrer && `referrer: ${referrer}`,
+      ...Object.keys(UTM).map((k) => `${k}=${UTM[k]}`),
+    ].filter(Boolean);
 
-    const loadedAt = parseInt(loadedAtEl?.value || '0', 10);
+    const payload = {
+      name: document.getElementById('name').value,
+      email: document.getElementById('email').value,
+      phone: document.getElementById('phone').value,
+      service: document.getElementById('service').value,
+      zipCode: document.getElementById('zipCode')?.value?.trim() || '',
+      message: `${messageInput}\n\n[source: ${sourceBits.join(' | ')}]`,
+      smsConsent: document.getElementById('sms-consent')?.checked || false,
+      website: document.getElementById('website')?.value || '', // honeypot
+      loadedAt: parseInt(loadedAtEl?.value || '0', 10),
+      // Structured attribution
+      market: MARKET,
+      page: window.location.pathname,
+      landingPage,
+      referrer,
+      utm: UTM,
+      heardAbout,
+    };
 
     try {
-      const res = await fetch(MILLIE_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          email,
-          phone,
-          service,
-          zipCode,
-          message: UTM_PARAMS ? `${messageInput}\n\n[ad attribution: ${UTM_PARAMS}]` : messageInput,
-          smsConsent,
-          website,
-          loadedAt,
-        }),
-      });
+      // Try once, wait briefly, try once more. Only then tell the family it
+      // did not go through, so a failed send is never shown as "Thank you".
+      let sent = await postLead(payload);
+      if (!sent) {
+        await new Promise((r) => setTimeout(r, 1500));
+        sent = await postLead(payload);
+      }
 
-      if (res.ok) {
-        trackLead();
-        contactForm.classList.add('hidden');
-        formSuccess.classList.remove('hidden');
-        formSuccess.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      if (sent) {
+        try { if (typeof fbq === 'function') fbq('track', 'Lead'); } catch (e) {}
+        try { if (typeof plausible === 'function') plausible('Lead', { props: { market: MARKET } }); } catch (e) {}
+        show(formSuccess);
       } else {
-        throw new Error('Failed');
+        try { if (typeof plausible === 'function') plausible('Lead send failed', { props: { market: MARKET } }); } catch (e) {}
+        show(formError || formSuccess);
       }
     } catch (err) {
-      // Even on network error, show success, coordinator gets backup via Plausible
-      // event log + phone number in success copy.
-      trackLead();
-      contactForm.classList.add('hidden');
-      formSuccess.classList.remove('hidden');
-      formSuccess.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      // A problem the visitor can fix (e.g. an invalid email): stay on the form.
+      fieldError.textContent = err.message;
+      fieldError.classList.remove('hidden');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalLabel;
     }
-    // Don't re-enable, form is hidden on both success and error
-    submitBtn.innerHTML = originalLabel;
   });
 }

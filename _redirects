@@ -1,11 +1,13 @@
 # Netlify redirects
-# Add custom redirects here if needed
 
-# Legacy path from first Austin launch → new /atx/ path
-/austin/*  /atx/:splat  301!
+# Austin page lives at /austin/. /atx/ was its earlier path.
+/atx    /austin/  301!
+/atx/*  /austin/  301!
 
-# Vanity subdomain for ads/print, requires 'atx.caringnannies.com' added as a domain alias in Netlify
-https://atx.caringnannies.com/*  https://caringnannies.com/atx/:splat  301!
+# /satx/ duplicated the homepage, which is the San Antonio page.
+/satx    /  301!
+/satx/*  /  301!
 
-# Vanity subdomain for San Antonio, requires 'satx.caringnannies.com' added as a domain alias in Netlify
-https://satx.caringnannies.com/*  https://caringnannies.com/satx/:splat  301!
+# Vanity subdomains for ads/print (each must be a domain alias in Netlify)
+https://atx.caringnannies.com/*   https://caringnannies.com/austin/  301!
+https://satx.caringnannies.com/*  https://caringnannies.com/  301!
